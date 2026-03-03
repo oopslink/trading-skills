@@ -1,13 +1,6 @@
 import click
-import tushare as ts
-from tushare_cli.config import resolve_token
+from tushare_cli.api import get_pro, call_api
 from tushare_cli.output import format_output
-
-
-def get_pro(ctx):
-    token = resolve_token(ctx.obj.get("token"))
-    ts.set_token(token)
-    return ts.pro_api()
 
 
 @click.group()
@@ -17,69 +10,72 @@ def alpha():
 
 @alpha.command("sector-strategy")
 @click.option("--sector-code", required=True, help="e.g. 801010.SI")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
 @click.pass_context
-def sector_strategy(ctx, sector_code, benchmark_code, end_date):
-    """Analyze a single sector's alpha vs benchmark."""
+def sector_strategy(ctx, sector_code, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(ts_code=sector_code, trade_date=end_date)
+    params = {"ts_code": sector_code, "trade_date": end_date}
+    df = call_api(ctx, "sw_daily_sector_strategy", params,
+                  lambda: pro.sw_daily(ts_code=sector_code, trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @alpha.command("rank-l1")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
-@click.option("--top-n", default=10, type=int)
 @click.pass_context
-def rank_l1(ctx, benchmark_code, end_date, top_n):
-    """Rank L1 Shenwan sectors by alpha vs benchmark."""
+def rank_l1(ctx, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(trade_date=end_date)
+    params = {"trade_date": end_date}
+    df = call_api(ctx, "sw_daily_rank_l1", params,
+                  lambda: pro.sw_daily(trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @alpha.command("rank-l2")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
-@click.option("--top-n", default=10, type=int)
 @click.pass_context
-def rank_l2(ctx, benchmark_code, end_date, top_n):
-    """Rank L2 Shenwan sectors by alpha vs benchmark."""
+def rank_l2(ctx, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(trade_date=end_date)
+    params = {"trade_date": end_date}
+    df = call_api(ctx, "sw_daily_rank_l2", params,
+                  lambda: pro.sw_daily(trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @alpha.command("rank-l1-full")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
 @click.pass_context
-def rank_l1_full(ctx, benchmark_code, end_date):
-    """Full L1 sector alpha ranking (all sectors)."""
+def rank_l1_full(ctx, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(trade_date=end_date)
+    params = {"trade_date": end_date}
+    df = call_api(ctx, "sw_daily_rank_l1_full", params,
+                  lambda: pro.sw_daily(trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @alpha.command("rank-l1-velocity")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
 @click.pass_context
-def rank_l1_velocity(ctx, benchmark_code, end_date):
-    """L1 sector alpha rank velocity (momentum of ranking changes)."""
+def rank_l1_velocity(ctx, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(trade_date=end_date)
+    params = {"trade_date": end_date}
+    df = call_api(ctx, "sw_daily_rank_l1_velocity", params,
+                  lambda: pro.sw_daily(trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @alpha.command("rank-l2-velocity")
-@click.option("--benchmark", "benchmark_code", default="000300.SH")
 @click.option("--end-date", default="")
-@click.option("--top-n", default=10, type=int)
 @click.pass_context
-def rank_l2_velocity(ctx, benchmark_code, end_date, top_n):
-    """L2 sector alpha rank velocity (momentum of ranking changes)."""
+def rank_l2_velocity(ctx, end_date):
+    """Returns raw Shenwan daily data. Alpha computation requires tushare_mcp's alpha_strategy_analyzer module."""
     pro = get_pro(ctx)
-    df = pro.sw_daily(trade_date=end_date)
+    params = {"trade_date": end_date}
+    df = call_api(ctx, "sw_daily_rank_l2_velocity", params,
+                  lambda: pro.sw_daily(trade_date=end_date))
     click.echo(format_output(df, ctx.obj["fmt"]))

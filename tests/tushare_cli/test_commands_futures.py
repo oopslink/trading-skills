@@ -13,7 +13,7 @@ def run_cmd(args):
         getattr(pro, m).return_value = MOCK_DF
     runner = CliRunner()
     with patch("tushare.pro_api", return_value=pro):
-        with patch("tushare_cli.commands.futures.resolve_token", return_value="fake"):
+        with patch("tushare_cli.api.resolve_token", return_value="fake"):
             return runner.invoke(cli, args)
 
 

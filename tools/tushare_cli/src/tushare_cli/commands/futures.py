@@ -1,13 +1,6 @@
 import click
-import tushare as ts
-from tushare_cli.config import resolve_token
+from tushare_cli.api import get_pro, call_api
 from tushare_cli.output import format_output
-
-
-def get_pro(ctx):
-    token = resolve_token(ctx.obj.get("token"))
-    ts.set_token(token)
-    return ts.pro_api()
 
 
 @click.group()
@@ -24,8 +17,10 @@ def futures():
 def contracts(ctx, exchange, fut_type, fut_code, list_date):
     """Futures contract basic info."""
     pro = get_pro(ctx)
-    df = pro.fut_basic(exchange=exchange, fut_type=fut_type,
-                       fut_code=fut_code, list_date=list_date)
+    params = {"exchange": exchange, "fut_type": fut_type,
+              "fut_code": fut_code, "list_date": list_date}
+    df = call_api(ctx, "fut_basic", params,
+                  lambda: pro.fut_basic(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
@@ -38,8 +33,10 @@ def contracts(ctx, exchange, fut_type, fut_code, list_date):
 def nh_index(ctx, ts_code, trade_date, start_date, end_date):
     """NanHua futures index daily data."""
     pro = get_pro(ctx)
-    df = pro.index_daily(ts_code=ts_code, trade_date=trade_date,
-                         start_date=start_date, end_date=end_date)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "index_daily_futures", params,
+                  lambda: pro.index_daily(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
@@ -53,8 +50,10 @@ def nh_index(ctx, ts_code, trade_date, start_date, end_date):
 def holdings(ctx, trade_date, symbol, start_date, end_date, exchange):
     """Futures institutional holdings ranking (持仓排名)."""
     pro = get_pro(ctx)
-    df = pro.fut_holding(trade_date=trade_date, symbol=symbol,
-                         start_date=start_date, end_date=end_date, exchange=exchange)
+    params = {"trade_date": trade_date, "symbol": symbol,
+              "start_date": start_date, "end_date": end_date, "exchange": exchange}
+    df = call_api(ctx, "fut_holding", params,
+                  lambda: pro.fut_holding(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
@@ -68,8 +67,10 @@ def holdings(ctx, trade_date, symbol, start_date, end_date, exchange):
 def wsr(ctx, trade_date, symbol, start_date, end_date, exchange):
     """Warehouse stock receipts (仓单日报)."""
     pro = get_pro(ctx)
-    df = pro.fut_wsr(trade_date=trade_date, symbol=symbol,
-                     start_date=start_date, end_date=end_date, exchange=exchange)
+    params = {"trade_date": trade_date, "symbol": symbol,
+              "start_date": start_date, "end_date": end_date, "exchange": exchange}
+    df = call_api(ctx, "fut_wsr", params,
+                  lambda: pro.fut_wsr(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
@@ -83,7 +84,11 @@ def minute(ctx, ts_code, freq, date_str):
     """Futures intraday minute data."""
     pro = get_pro(ctx)
     if date_str:
-        df = pro.rt_fut_min_daily(ts_code=ts_code, freq=freq, date=date_str)
+        params = {"ts_code": ts_code, "freq": freq, "date": date_str}
+        df = call_api(ctx, "rt_fut_min_daily", params,
+                      lambda: pro.rt_fut_min_daily(**params))
     else:
-        df = pro.rt_fut_min(ts_code=ts_code, freq=freq)
+        params = {"ts_code": ts_code, "freq": freq}
+        df = call_api(ctx, "rt_fut_min", params,
+                      lambda: pro.rt_fut_min(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))

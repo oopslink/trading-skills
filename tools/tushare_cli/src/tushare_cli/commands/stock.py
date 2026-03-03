@@ -1,28 +1,7 @@
 import click
-import tushare as ts
-from tushare_cli.config import resolve_token
+import pandas as pd
+from tushare_cli.api import get_pro, call_api
 from tushare_cli.output import format_output
-from tushare_cli.cache import get_cached, set_cached, make_key
-
-
-def get_pro(ctx):
-    token = resolve_token(ctx.obj.get("token"))
-    ts.set_token(token)
-    return ts.pro_api()
-
-
-def emit(ctx, df, api_name=None, params=None):
-    use_cache = ctx.obj.get("cache", False)
-    if use_cache and api_name:
-        key = make_key(api_name, params or {})
-        cached = get_cached(key)
-        if cached is not None:
-            click.echo(format_output(cached, ctx.obj["fmt"]))
-            return
-    result_df = df if df is not None else __import__("pandas").DataFrame()
-    click.echo(format_output(result_df, ctx.obj["fmt"]))
-    if use_cache and api_name and df is not None and not df.empty:
-        set_cached(make_key(api_name, params or {}), df)
 
 
 @click.group()
@@ -37,9 +16,12 @@ def stock():
 def basic(ctx, ts_code, name):
     """Stock basic info."""
     pro = get_pro(ctx)
-    df = pro.stock_basic(ts_code=ts_code, name=name,
-                         fields="ts_code,symbol,name,area,industry,list_date")
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "name": name,
+              "fields": "ts_code,symbol,name,area,industry,list_date"}
+    df = call_api(ctx, "stock_basic", params,
+                  lambda: pro.stock_basic(ts_code=ts_code, name=name,
+                                          fields="ts_code,symbol,name,area,industry,list_date"))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -48,12 +30,14 @@ def basic(ctx, ts_code, name):
 def search(ctx, keyword):
     """Search stocks by keyword (name or ts_code)."""
     pro = get_pro(ctx)
-    df = pro.stock_basic(fields="ts_code,symbol,name,area,industry,list_date")
-    if df is not None and not df.empty:
+    params = {"fields": "ts_code,symbol,name,area,industry,list_date"}
+    df = call_api(ctx, "stock_basic_search", params,
+                  lambda: pro.stock_basic(fields="ts_code,symbol,name,area,industry,list_date"))
+    if not df.empty:
         name_mask = df["name"].str.contains(keyword, na=False) if "name" in df.columns else False
         code_mask = df["ts_code"].str.contains(keyword, na=False) if "ts_code" in df.columns else False
         df = df[name_mask | code_mask]
-    emit(ctx, df)
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -65,9 +49,11 @@ def search(ctx, keyword):
 def daily(ctx, ts_code, trade_date, start_date, end_date):
     """Stock daily OHLCV data."""
     pro = get_pro(ctx)
-    df = pro.daily(ts_code=ts_code, trade_date=trade_date,
-                   start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "stock_daily", params,
+                  lambda: pro.daily(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -79,9 +65,11 @@ def daily(ctx, ts_code, trade_date, start_date, end_date):
 def weekly(ctx, ts_code, trade_date, start_date, end_date):
     """Stock weekly OHLCV data."""
     pro = get_pro(ctx)
-    df = pro.weekly(ts_code=ts_code, trade_date=trade_date,
-                    start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "stock_weekly", params,
+                  lambda: pro.weekly(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("etf-daily")
@@ -93,9 +81,11 @@ def weekly(ctx, ts_code, trade_date, start_date, end_date):
 def etf_daily(ctx, ts_code, trade_date, start_date, end_date):
     """ETF daily data."""
     pro = get_pro(ctx)
-    df = pro.fund_daily(ts_code=ts_code, trade_date=trade_date,
-                        start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "etf_daily", params,
+                  lambda: pro.fund_daily(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("holder-trade")
@@ -109,10 +99,12 @@ def etf_daily(ctx, ts_code, trade_date, start_date, end_date):
 def holder_trade(ctx, ts_code, ann_date, start_date, end_date, trade_type, holder_type):
     """Shareholder buy/sell trades."""
     pro = get_pro(ctx)
-    df = pro.stk_holdertrade(ts_code=ts_code, ann_date=ann_date,
-                              start_date=start_date, end_date=end_date,
-                              trade_type=trade_type, holder_type=holder_type)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "ann_date": ann_date,
+              "start_date": start_date, "end_date": end_date,
+              "trade_type": trade_type, "holder_type": holder_type}
+    df = call_api(ctx, "stk_holdertrade", params,
+                  lambda: pro.stk_holdertrade(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("holder-number")
@@ -125,9 +117,11 @@ def holder_trade(ctx, ts_code, ann_date, start_date, end_date, trade_type, holde
 def holder_number(ctx, ts_code, ann_date, enddate, start_date, end_date):
     """Number of shareholders."""
     pro = get_pro(ctx)
-    df = pro.stk_holdernumber(ts_code=ts_code, ann_date=ann_date,
-                               enddate=enddate, start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "ann_date": ann_date,
+              "enddate": enddate, "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "stk_holdernumber", params,
+                  lambda: pro.stk_holdernumber(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -139,9 +133,11 @@ def holder_number(ctx, ts_code, ann_date, enddate, start_date, end_date):
 def moneyflow(ctx, ts_code, trade_date, start_date, end_date):
     """Stock capital flow (Dongcai)."""
     pro = get_pro(ctx)
-    df = pro.moneyflow_dc(ts_code=ts_code, trade_date=trade_date,
-                          start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "moneyflow_dc", params,
+                  lambda: pro.moneyflow_dc(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -153,9 +149,11 @@ def moneyflow(ctx, ts_code, trade_date, start_date, end_date):
 def survey(ctx, ts_code, trade_date, start_date, end_date):
     """Institutional survey records."""
     pro = get_pro(ctx)
-    df = pro.stk_surv(ts_code=ts_code, trade_date=trade_date,
-                      start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "stk_surv", params,
+                  lambda: pro.stk_surv(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("cyq-perf")
@@ -167,9 +165,11 @@ def survey(ctx, ts_code, trade_date, start_date, end_date):
 def cyq_perf(ctx, ts_code, trade_date, start_date, end_date):
     """Chip distribution performance."""
     pro = get_pro(ctx)
-    df = pro.cyq_perf(ts_code=ts_code, trade_date=trade_date,
-                      start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "cyq_perf", params,
+                  lambda: pro.cyq_perf(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("daily-basic")
@@ -181,9 +181,11 @@ def cyq_perf(ctx, ts_code, trade_date, start_date, end_date):
 def daily_basic(ctx, ts_code, trade_date, start_date, end_date):
     """Daily fundamentals (PE, PB, turnover rate)."""
     pro = get_pro(ctx)
-    df = pro.daily_basic(ts_code=ts_code, trade_date=trade_date,
-                         start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "daily_basic", params,
+                  lambda: pro.daily_basic(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("top-list")
@@ -193,8 +195,10 @@ def daily_basic(ctx, ts_code, trade_date, start_date, end_date):
 def top_list(ctx, trade_date, ts_code):
     """Dragon and Tiger list."""
     pro = get_pro(ctx)
-    df = pro.top_list(trade_date=trade_date, ts_code=ts_code)
-    emit(ctx, df)
+    params = {"trade_date": trade_date, "ts_code": ts_code}
+    df = call_api(ctx, "top_list", params,
+                  lambda: pro.top_list(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("top-inst")
@@ -204,8 +208,10 @@ def top_list(ctx, trade_date, ts_code):
 def top_inst(ctx, trade_date, ts_code):
     """Institutional Dragon and Tiger details."""
     pro = get_pro(ctx)
-    df = pro.top_inst(trade_date=trade_date, ts_code=ts_code)
-    emit(ctx, df)
+    params = {"trade_date": trade_date, "ts_code": ts_code}
+    df = call_api(ctx, "top_inst", params,
+                  lambda: pro.top_inst(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -218,10 +224,14 @@ def minute(ctx, ts_code, freq, date_str):
     """Intraday minute data."""
     pro = get_pro(ctx)
     if date_str:
-        df = pro.rt_min_daily(ts_code=ts_code, freq=freq, date=date_str)
+        params = {"ts_code": ts_code, "freq": freq, "date": date_str}
+        df = call_api(ctx, "rt_min_daily", params,
+                      lambda: pro.rt_min_daily(**params))
     else:
-        df = pro.rt_min(ts_code=ts_code, freq=freq)
-    emit(ctx, df)
+        params = {"ts_code": ts_code, "freq": freq}
+        df = call_api(ctx, "rt_min", params,
+                      lambda: pro.rt_min(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("rt-k")
@@ -230,8 +240,10 @@ def minute(ctx, ts_code, freq, date_str):
 def rt_k(ctx, ts_code):
     """Real-time K-line data."""
     pro = get_pro(ctx)
-    df = pro.rt_k(ts_code=ts_code)
-    emit(ctx, df)
+    params = {"ts_code": ts_code}
+    df = call_api(ctx, "rt_k", params,
+                  lambda: pro.rt_k(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("share-float")
@@ -244,9 +256,11 @@ def rt_k(ctx, ts_code):
 def share_float(ctx, ts_code, ann_date, float_date, start_date, end_date):
     """Lock-up share release schedule."""
     pro = get_pro(ctx)
-    df = pro.share_float(ts_code=ts_code, ann_date=ann_date,
-                         float_date=float_date, start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "ann_date": ann_date,
+              "float_date": float_date, "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "share_float", params,
+                  lambda: pro.share_float(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command()
@@ -257,8 +271,10 @@ def share_float(ctx, ts_code, ann_date, float_date, start_date, end_date):
 def repurchase(ctx, ann_date, start_date, end_date):
     """Share repurchase records."""
     pro = get_pro(ctx)
-    df = pro.repurchase(ann_date=ann_date, start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ann_date": ann_date, "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "repurchase", params,
+                  lambda: pro.repurchase(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("pledge-detail")
@@ -267,8 +283,10 @@ def repurchase(ctx, ann_date, start_date, end_date):
 def pledge_detail(ctx, ts_code):
     """Share pledge details."""
     pro = get_pro(ctx)
-    df = pro.pledge_detail(ts_code=ts_code)
-    emit(ctx, df)
+    params = {"ts_code": ts_code}
+    df = call_api(ctx, "pledge_detail", params,
+                  lambda: pro.pledge_detail(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("block-trade")
@@ -280,9 +298,11 @@ def pledge_detail(ctx, ts_code):
 def block_trade(ctx, ts_code, trade_date, start_date, end_date):
     """Block trade records."""
     pro = get_pro(ctx)
-    df = pro.block_trade(ts_code=ts_code, trade_date=trade_date,
-                         start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "block_trade", params,
+                  lambda: pro.block_trade(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("index-daily")
@@ -294,9 +314,11 @@ def block_trade(ctx, ts_code, trade_date, start_date, end_date):
 def index_daily(ctx, ts_code, trade_date, start_date, end_date):
     """Stock index daily data."""
     pro = get_pro(ctx)
-    df = pro.index_daily(ts_code=ts_code, trade_date=trade_date,
-                         start_date=start_date, end_date=end_date)
-    emit(ctx, df)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "index_daily_stock", params,
+                  lambda: pro.index_daily(**params))
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("sector-strength")
@@ -306,10 +328,13 @@ def index_daily(ctx, ts_code, trade_date, start_date, end_date):
 def sector_strength(ctx, sector_type, top_n):
     """Real-time strong sectors scan."""
     pro = get_pro(ctx)
-    df = pro.rt_k(ts_code=f"*.{sector_type}")
-    if df is not None and not df.empty and "pct_chg" in df.columns:
+    ts_code_val = f"*.{sector_type}"
+    params = {"ts_code": ts_code_val}
+    df = call_api(ctx, "rt_k_sector", params,
+                  lambda: pro.rt_k(ts_code=ts_code_val))
+    if not df.empty and "pct_chg" in df.columns:
         df = df.nlargest(top_n, "pct_chg")
-    emit(ctx, df)
+    click.echo(format_output(df, ctx.obj["fmt"]))
 
 
 @stock.command("sector-health")
@@ -318,7 +343,9 @@ def sector_strength(ctx, sector_type, top_n):
 @click.option("--top-n", default=10, type=int)
 @click.pass_context
 def sector_health(ctx, sector_type, benchmark_code, top_n):
-    """Sector health analysis vs benchmark."""
+    """Fetch benchmark K-line data (sector comparison not yet implemented)."""
     pro = get_pro(ctx)
-    df = pro.rt_k(ts_code=benchmark_code)
-    emit(ctx, df)
+    params = {"ts_code": benchmark_code}
+    df = call_api(ctx, "rt_k_benchmark", params,
+                  lambda: pro.rt_k(ts_code=benchmark_code))
+    click.echo(format_output(df, ctx.obj["fmt"]))

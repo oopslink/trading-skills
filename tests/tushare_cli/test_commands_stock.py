@@ -21,7 +21,7 @@ def run_cmd(args):
     runner = CliRunner()
     pro_mock = make_pro_mock()
     with patch("tushare.pro_api", return_value=pro_mock):
-        with patch("tushare_cli.commands.stock.resolve_token", return_value="fake_token"):
+        with patch("tushare_cli.api.resolve_token", return_value="fake_token"):
             return runner.invoke(cli, args)
 
 
@@ -118,3 +118,23 @@ def test_stock_json_format():
     result = run_cmd(["--format", "json", "stock", "daily", "--ts-code", "000001.SZ"])
     assert result.exit_code == 0
     assert "ts_code" in result.output
+
+
+def test_cache_prevents_second_api_call(tmp_path, monkeypatch):
+    """Cache hit should prevent second API call."""
+    monkeypatch.setattr("tushare_cli.cache.CACHE_DIR", tmp_path)
+    pro_mock = make_pro_mock()
+    runner = CliRunner()
+    with patch("tushare.pro_api", return_value=pro_mock):
+        with patch("tushare_cli.api.resolve_token", return_value="fake"):
+            # First call — should hit API and write cache
+            result1 = runner.invoke(cli, ["--cache", "stock", "daily",
+                                          "--ts-code", "000001.SZ"])
+            assert result1.exit_code == 0
+            assert pro_mock.daily.call_count == 1
+
+            # Second call — should hit cache, NOT call API again
+            result2 = runner.invoke(cli, ["--cache", "stock", "daily",
+                                          "--ts-code", "000001.SZ"])
+            assert result2.exit_code == 0
+            assert pro_mock.daily.call_count == 1  # still 1, not 2

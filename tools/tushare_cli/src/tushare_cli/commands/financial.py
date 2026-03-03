@@ -1,13 +1,6 @@
 import click
-import tushare as ts
-from tushare_cli.config import resolve_token
+from tushare_cli.api import get_pro, call_api
 from tushare_cli.output import format_output
-
-
-def get_pro(ctx):
-    token = resolve_token(ctx.obj.get("token"))
-    ts.set_token(token)
-    return ts.pro_api()
 
 
 @click.group()
@@ -24,8 +17,10 @@ def financial():
 def income(ctx, ts_code, start_date, end_date, report_type):
     """Income statement data."""
     pro = get_pro(ctx)
-    df = pro.income(ts_code=ts_code, start_date=start_date,
-                    end_date=end_date, report_type=report_type)
+    params = {"ts_code": ts_code, "start_date": start_date,
+              "end_date": end_date, "report_type": report_type}
+    df = call_api(ctx, "income", params,
+                  lambda: pro.income(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
@@ -39,6 +34,8 @@ def income(ctx, ts_code, start_date, end_date, report_type):
 def indicator(ctx, ts_code, ann_date, start_date, end_date, period):
     """Key financial indicators (ROE, EPS, gross margin, etc.)."""
     pro = get_pro(ctx)
-    df = pro.fina_indicator(ts_code=ts_code, ann_date=ann_date,
-                            start_date=start_date, end_date=end_date, period=period)
+    params = {"ts_code": ts_code, "ann_date": ann_date,
+              "start_date": start_date, "end_date": end_date, "period": period}
+    df = call_api(ctx, "fina_indicator", params,
+                  lambda: pro.fina_indicator(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))

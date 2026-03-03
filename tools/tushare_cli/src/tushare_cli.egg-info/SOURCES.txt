@@ -1,5 +1,6 @@
 pyproject.toml
 src/tushare_cli/__init__.py
+src/tushare_cli/config.py
 src/tushare_cli/main.py
 src/tushare_cli.egg-info/PKG-INFO
 src/tushare_cli.egg-info/SOURCES.txt

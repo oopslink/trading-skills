@@ -28,7 +28,8 @@ def resolve_token(token: str | None) -> str:
 
 
 def save_token(token: str) -> None:
-    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     content = f'[tushare]\ntoken = "{token}"\n'
     CONFIG_PATH.write_text(content)
+    CONFIG_PATH.chmod(0o600)
     print(f"Token saved to {CONFIG_PATH}")

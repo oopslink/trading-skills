@@ -1,13 +1,6 @@
 import click
-import tushare as ts
-from tushare_cli.config import resolve_token
+from tushare_cli.api import get_pro, call_api
 from tushare_cli.output import format_output
-
-
-def get_pro(ctx):
-    token = resolve_token(ctx.obj.get("token"))
-    ts.set_token(token)
-    return ts.pro_api()
 
 
 @click.group()
@@ -27,6 +20,8 @@ def daily(ctx, ts_code, trade_date, start_date, end_date):
     if not ts_code.endswith(".FX"):
         ts_code = ts_code + ".FX"
     pro = get_pro(ctx)
-    df = pro.fx_daily(ts_code=ts_code, trade_date=trade_date,
-                      start_date=start_date, end_date=end_date)
+    params = {"ts_code": ts_code, "trade_date": trade_date,
+              "start_date": start_date, "end_date": end_date}
+    df = call_api(ctx, "fx_daily", params,
+                  lambda: pro.fx_daily(**params))
     click.echo(format_output(df, ctx.obj["fmt"]))

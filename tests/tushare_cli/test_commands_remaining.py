@@ -13,9 +13,8 @@ def run_cmd(args, module=None):
               "rt_k", "sw_daily", "index_classify"]:
         getattr(pro, m).return_value = MOCK_DF
     runner = CliRunner()
-    patches = [patch("tushare.pro_api", return_value=pro)]
-    if module:
-        patches.append(patch(f"tushare_cli.commands.{module}.resolve_token", return_value="fake"))
+    patches = [patch("tushare.pro_api", return_value=pro),
+               patch("tushare_cli.api.resolve_token", return_value="fake")]
     from contextlib import ExitStack
     with ExitStack() as stack:
         for p in patches:
