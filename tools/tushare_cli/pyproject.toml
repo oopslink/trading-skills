@@ -17,4 +17,4 @@ dependencies = [
 tushare-cli = "tushare_cli.main:cli"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = ["src"]
