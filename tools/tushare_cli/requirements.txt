@@ -1,0 +1,4 @@
+click>=8.1
+tushare>=1.4
+rich>=13.0
+pandas>=2.0

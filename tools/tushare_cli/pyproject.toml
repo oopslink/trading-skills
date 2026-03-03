@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tushare-cli"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "tushare>=1.4",
+    "rich>=13.0",
+    "pandas>=2.0",
+]
+
+[project.scripts]
+tushare-cli = "tushare_cli.main:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
