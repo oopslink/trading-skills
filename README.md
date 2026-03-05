@@ -62,7 +62,7 @@ trading-skills/
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone git@github.com:oopslink/trading-skills.git
 cd trading-skills
 
 # Install the CLI in development mode
