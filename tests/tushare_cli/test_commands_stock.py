@@ -114,6 +114,18 @@ def test_stock_sector_health():
     result = run_cmd(["stock", "sector-health"])
     assert result.exit_code == 0
 
+def test_stock_list_default():
+    result = run_cmd(["stock", "list"])
+    assert result.exit_code == 0
+
+def test_stock_list_with_exchange():
+    result = run_cmd(["stock", "list", "--exchange", "SSE"])
+    assert result.exit_code == 0
+
+def test_stock_list_with_list_status():
+    result = run_cmd(["stock", "list", "--list-status", "D"])
+    assert result.exit_code == 0
+
 def test_stock_json_format():
     result = run_cmd(["--format", "json", "stock", "daily", "--ts-code", "000001.SZ"])
     assert result.exit_code == 0

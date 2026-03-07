@@ -9,6 +9,9 @@ description: Use when querying A-share individual stock data including price his
 
 ```bash
 # Lookup
+tushare-cli stock list                                 # all listed A-shares
+tushare-cli stock list --exchange SSE                  # Shanghai only (SSE/SZSE/BSE)
+tushare-cli stock list --list-status D                 # delisted stocks (L/D/P)
 tushare-cli stock basic  --ts-code 000001.SZ          # stock info
 tushare-cli stock search --keyword 平安银行             # find code by name
 

@@ -24,6 +24,21 @@ def basic(ctx, ts_code, name):
     click.echo(format_output(df, ctx.obj["fmt"]))
 
 
+@stock.command("list")
+@click.option("--exchange", default="", help="SSE, SZSE, BSE or empty for all")
+@click.option("--list-status", default="L", help="L=listed, D=delisted, P=suspended")
+@click.pass_context
+def stock_list(ctx, exchange, list_status):
+    """List all A-share stocks."""
+    pro = get_pro(ctx)
+    params = {"exchange": exchange, "list_status": list_status,
+              "fields": "ts_code,symbol,name,area,industry,list_date,list_status"}
+    df = call_api(ctx, "stock_list", params,
+                  lambda: pro.stock_basic(exchange=exchange, list_status=list_status,
+                                          fields="ts_code,symbol,name,area,industry,list_date,list_status"))
+    click.echo(format_output(df, ctx.obj["fmt"]))
+
+
 @stock.command()
 @click.option("--keyword", required=True)
 @click.pass_context
