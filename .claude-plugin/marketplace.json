@@ -3,42 +3,12 @@
   "owner": {
     "name": "oopslink"
   },
-  "metadata": {
-    "description": "A-share market data query skills for tushare-cli: stock, index, concepts, sector rotation, financials, futures, forex"
-  },
   "plugins": [
     {
       "name": "trading-skills",
       "source": "./",
-      "description": "A-share market data query skills for tushare-cli covering stock basics, index data, concept boards, sector rotation, financials, futures, and forex",
-      "author": {
-        "name": "oopslink"
-      },
-      "homepage": "https://github.com/oopslink/trading-skills",
-      "repository": "https://github.com/oopslink/trading-skills",
-      "license": "UNLICENSED",
-      "keywords": [
-        "tushare",
-        "a-share",
-        "chinese-market",
-        "stock",
-        "sector-rotation",
-        "futures",
-        "forex",
-        "trading"
-      ],
-      "category": "data",
-      "tags": [
-        "tushare",
-        "a-share",
-        "stock",
-        "index",
-        "concepts",
-        "alpha",
-        "financials",
-        "futures",
-        "forex"
-      ]
+      "description": "A-share market data query skills for tushare-cli",
+      "version": "0.1.0"
     }
   ]
 }
